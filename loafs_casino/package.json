@@ -1,14 +1,12 @@
 {
   "name": "loafs-casino",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "LOAFS CASINO virtual-chip multiplayer prototype",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.21.2",
-    "socket.io": "^4.8.1"
+    "express": "^4.21.2"
   }
 }
