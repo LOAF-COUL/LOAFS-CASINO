@@ -1,36 +1,36 @@
-LOAFS CASINO v4 — Accounts, virtual chips and daily wheel
+LOAFS CASINO V5 — animated practice arcade
 
-IMPORTANT: Virtual chips are game-only points. They have no cash value.
-This build does not accept payments, sell chips, allow cash-outs, transfers,
-or exchange chips for prizes.
+This version keeps the account system and PostgreSQL persistence from V4,
+with a redesigned navy/blue/pink game-room interface and animated practice games.
+
+Included:
+- Account registration and login (bcrypt password hashing, HTTP-only session cookie)
+- 5,000 starting practice credits
+- One fixed 500-credit daily login bonus (the wheel animation is decorative;
+  every eligible account receives the same amount)
+- Animated blackjack practice with card dealing/flips, hit and stand
+- Baccarat practice with animated card reveals and automatic scoring
+- Roulette wheel animation and numbered result display
+- Red/white casino-style visual chips as cosmetic selectors and display pieces
+- Responsive white, blue, pink and navy styling
+
+Safety / economy:
+- Credits are game-only practice points with no cash value.
+- No deposits, purchases, cash-outs, transfers, wagering, stakes, side bets,
+  payouts, prizes, or conversion of credits.
+- Game rounds do not deduct or award credits.
+- Chip denominations are cosmetic UI selections only.
 
 Files:
 - package.json
 - server.js
 - public/index.html
 
-Backend:
-- PostgreSQL stores player accounts and chip balances.
-- bcryptjs hashes passwords.
-- JWT is stored in an HTTP-only cookie.
-- New accounts start with 5,000 virtual chips.
-- Daily wheel is enforced server-side once per calendar day.
-- Basic rate limiting is enabled for account and wheel endpoints.
+Render:
+1. Keep your existing PostgreSQL database.
+2. Keep DATABASE_URL and JWT_SECRET in Render Environment.
+3. Replace package.json and server.js in the loafs_casino folder.
+4. Replace public/index.html in loafs_casino/public.
+5. Commit changes and wait for Render to deploy.
 
-RENDER SETUP REQUIRED:
-1. In Render, create a PostgreSQL database (New + > PostgreSQL).
-2. Open the database page and copy its Internal Database URL.
-3. Open the LOAFS-CASINO Web Service > Environment.
-4. Add DATABASE_URL = the Internal Database URL.
-5. Add JWT_SECRET = a long random secret (at least 32 random characters).
-6. Save changes.
-7. In the GitHub repository, replace package.json and server.js inside loafs_casino.
-8. Replace index.html inside loafs_casino/public.
-9. Commit changes and wait for Render to deploy.
-
-Do not paste your database URL or JWT secret into chat or commit them to GitHub.
-The service creates the players table automatically at startup.
-
-Note: A daily spin uses the server's calendar date (UTC). This prototype has
-accounts and persistent balances but does not yet implement friends or
-multiplayer tables.
+Never put DATABASE_URL or JWT_SECRET in GitHub or share them in chat.

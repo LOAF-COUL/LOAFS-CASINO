@@ -17,7 +17,10 @@ const pool = new Pool({
 });
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!process.env.DATABASE_URL) console.warn('DATABASE_URL is not configured');
-if (!JWT_SECRET) console.warn('JWT_SECRET is not configured');
+if (!JWT_SECRET || JWT_SECRET.length < 32) {
+  console.error('JWT_SECRET must be configured with at least 32 random characters.');
+  process.exit(1);
+}
 
 const authLimiter = rateLimit({windowMs: 15*60*1000, limit: 25, standardHeaders: true, legacyHeaders: false});
 const spinLimiter = rateLimit({windowMs: 60*1000, limit: 8, standardHeaders: true, legacyHeaders: false});
@@ -89,8 +92,7 @@ app.get('/api/me',async(req,res)=>{
 app.post('/api/daily-spin',spinLimiter,async(req,res)=>{
   const p=await getPlayer(req);
   if(!p) return res.status(401).json({error:'Please log in first.'});
-  const rewards=[250,500,750,1000,1500,2000,3000];
-  const reward=rewards[Math.floor(Math.random()*rewards.length)];
+  const reward=500; // Fixed daily practice-credit bonus; no chance-based payout.
   const client=await pool.connect();
   try{
     await client.query('BEGIN');
@@ -104,15 +106,6 @@ app.post('/api/daily-spin',spinLimiter,async(req,res)=>{
     res.json({reward,player:publicPlayer(updated.rows[0])});
   }catch(e){await client.query('ROLLBACK');console.error(e);res.status(500).json({error:'The wheel could not be spun. Please try again.'});}
   finally{client.release();}
-});
-app.post('/api/chips/adjust',async(req,res)=>{
-  const p=await getPlayer(req);
-  if(!p) return res.status(401).json({error:'Please log in.'});
-  const delta=Number(req.body.delta);
-  if(!Number.isSafeInteger(delta)||delta===0||Math.abs(delta)>5000) return res.status(400).json({error:'Invalid chip adjustment.'});
-  const r=await pool.query('UPDATE players SET chips=chips+$1 WHERE id=$2 AND chips+$1>=0 RETURNING id,username,chips,last_daily_spin',[delta,p.id]);
-  if(!r.rowCount) return res.status(400).json({error:'Not enough chips.'});
-  res.json({player:publicPlayer(r.rows[0])});
 });
 app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'public','index.html')));
 
