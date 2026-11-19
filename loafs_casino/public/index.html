@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LOAFS CASINO</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+:root{--cyan:#21e6ff;--blue:#176dff;--pink:#ff3cbd;--gold:#ffd36b;--bg:#080b19}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#142c62 0,#090d20 48%,#050711 100%);color:#f7fbff;font-family:Inter,Arial,sans-serif;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 5%;border-bottom:1px solid #21e6ff66;background:#080d20dd;position:sticky;top:0;z-index:5;backdrop-filter:blur(12px)}
+.logo{font-size:clamp(22px,4vw,34px);font-weight:1000;letter-spacing:3px;color:white;text-shadow:0 0 10px var(--cyan),0 0 25px var(--blue)}
+.logo span{color:var(--cyan)}.wallet{color:var(--gold);font-weight:800}
+nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:15px}
+button{cursor:pointer;border:1px solid #21e6ff88;background:linear-gradient(135deg,#173b83,#10265a);color:white;padding:11px 16px;border-radius:9px;font-weight:800;letter-spacing:.4px;transition:.18s}
+button:hover{transform:translateY(-2px);box-shadow:0 0 17px #21e6ff77}
+button.primary{background:linear-gradient(120deg,#21e6ff,#176dff);color:#041020;border:0}
+button.pink{background:linear-gradient(120deg,#ff3cbd,#922cff);border:0}
+button.gold{background:linear-gradient(120deg,#ffe28c,#d89a28);color:#17101a;border:0}
+button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+main{max-width:1200px;margin:auto;padding:10px 18px 50px}
+.panel{background:linear-gradient(145deg,#101c3b,#0c1229);border:1px solid #2bdfff77;border-radius:18px;padding:22px;box-shadow:0 0 28px #1264d522;margin-bottom:18px}
+.hero{text-align:center;padding:38px 20px;background:radial-gradient(ellipse at center,#1a4384,#10152e 70%);border-color:#ff3cbd88}
+h1{font-size:clamp(32px,7vw,62px);margin:8px;color:white;text-shadow:0 0 14px var(--cyan),0 0 30px var(--pink)}
+h2{color:var(--cyan);margin-top:5px}.muted{color:#aab9df}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.tile{padding:24px;text-align:center;border:1px solid #427eff88;border-radius:15px;background:linear-gradient(145deg,#182c5c,#10152e);cursor:pointer}
+.tile:hover{box-shadow:0 0 25px #21e6ff66;transform:translateY(-3px)}
+.tile .emoji{font-size:48px}.hidden{display:none!important}
+input{background:#080f25;color:white;border:1px solid #21e6ff88;border-radius:8px;padding:11px;width:145px}
+.table{background:radial-gradient(ellipse at center,#126d86,#07506a 58%,#092d54);border:9px solid #d3a64b;border-radius:180px;min-height:300px;padding:30px 20px;text-align:center;box-shadow:inset 0 0 30px #031b3b,0 0 25px #21e6ff55}
+.dealer{display:inline-flex;align-items:center;gap:12px;background:#111c39dd;border:1px solid var(--pink);padding:10px 18px;border-radius:50px;margin-bottom:15px}
+.avatar{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ff3cbd,#21e6ff);font-size:24px}
+.seats{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:15px}
+.seat{background:#091b3b;border:1px solid #21e6ff88;border-radius:12px;padding:12px;min-width:120px}
+.cards{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;min-height:90px;margin:14px}
+.card{width:57px;height:82px;background:linear-gradient(145deg,#fff,#dfeaff);color:#111;border-radius:8px;display:grid;place-items:center;font-size:23px;font-weight:900;box-shadow:0 4px 12px #0008}
+.card.red{color:#e32255}.result{color:var(--gold);font-weight:900;text-align:center;min-height:25px;margin:14px}
+.chat{height:190px;overflow:auto;background:#080f25;border:1px solid #314e8a;border-radius:10px;padding:10px;margin-bottom:10px}
+.chat p{margin:6px 0;color:#d8e6ff;overflow-wrap:anywhere}.chat b{color:var(--cyan)}
+.cols{display:grid;grid-template-columns:2fr 1fr;gap:15px}@media(max-width:760px){.cols{grid-template-columns:1fr}header{position:static}}
+.badge{color:var(--gold);font-size:12px;letter-spacing:2px}
+</style>
+</head>
+<body>
+<header><div class="logo">♛ LOAFS <span>CASINO</span></div><div class="wallet">VIRTUAL CHIPS: <span id="chips">1,000</span></div></header>
+<nav>
+<button onclick="show('lobby')">LOBBY</button><button onclick="show('table')">MY TABLE</button><button onclick="show('friends')">FRIENDS</button>
+</nav>
+<main>
+<section id="login" class="panel hero">
+ <div class="badge">WELCOME TO THE NEON FLOOR</div><h1>LOAFS CASINO</h1>
+ <p class="muted">Play together. Make a table. Bring your friends.</p>
+ <p><input id="username" maxlength="18" placeholder="Choose a username"></p>
+ <button class="primary" onclick="connect()">ENTER CASINO</button>
+ <p class="muted">Virtual chips only. No real-money deposits or withdrawals.</p>
+</section>
+
+<section id="lobby" class="hidden">
+ <div class="panel hero"><div class="badge">THE NEON FLOOR IS OPEN</div><h1>LOAFS CASINO</h1><p class="muted">Choose a table, invite friends, and play together.</p>
+ <div class="row"><button class="primary" onclick="createRoom()">CREATE PRIVATE TABLE</button><input id="joinCode" placeholder="ROOM CODE" maxlength="6"><button onclick="joinRoom()">JOIN TABLE</button></div>
+ </div>
+ <div class="grid">
+  <div class="tile" onclick="selectGame('blackjack')"><div class="emoji">🂡</div><h2>BLACKJACK</h2><p class="muted">Classic 21 at a shared table.</p></div>
+  <div class="tile" onclick="selectGame('baccarat')"><div class="emoji">♦</div><h2>BACCARAT</h2><p class="muted">Player, Banker, or Tie.</p></div>
+  <div class="tile" onclick="selectGame('roulette')"><div class="emoji">🎡</div><h2>ROULETTE</h2><p class="muted">Spin the wheel and pick a number.</p></div>
+ </div>
+</section>
+
+<section id="table" class="hidden">
+ <div class="panel">
+  <div class="row"><h2 id="tableTitle">YOUR PRIVATE TABLE</h2><span class="badge">ROOM: <b id="roomCode">------</b></span><button onclick="copyRoom()">COPY INVITE CODE</button></div>
+  <div class="row">
+   <button onclick="selectGame('blackjack')">BLACKJACK</button>
+   <button onclick="selectGame('baccarat')">BACCARAT</button>
+   <button onclick="selectGame('roulette')">ROULETTE</button>
+  </div>
+ </div>
+ <div class="cols">
+  <div class="panel">
+   <div class="table">
+    <div class="dealer"><div class="avatar">♛</div><div><b>LOAFS DEALER</b><div class="badge">TABLE HOST</div></div></div>
+    <h2 id="gameName">BLACKJACK</h2>
+    <div id="dealerArea"><p>DEALER</p><div class="cards" id="dealerCards"></div></div>
+    <div class="seats" id="seats"></div>
+    <div class="result" id="gameMessage">Waiting for players...</div>
+   </div>
+   <div class="panel" style="margin-top:15px">
+    <div class="row"><label>Virtual bet <input id="bet" type="number" min="1" value="25"></label><button class="gold" onclick="startBlackjack()">DEAL BLACKJACK</button></div>
+    <div class="row" style="margin-top:12px"><button onclick="bjAction('hit')">HIT</button><button onclick="bjAction('stand')">STAND</button><button onclick="bjAction('double')">DOUBLE</button></div>
+    <p class="muted" id="turnMessage">Create or join a room to begin.</p>
+   </div>
+  </div>
+  <div class="panel">
+   <h2>TABLE CHAT</h2><div class="chat" id="chat"></div>
+   <div class="row"><input id="chatInput" placeholder="Message the table..." maxlength="180"><button class="primary" onclick="sendChat()">SEND</button></div>
+   <h2 style="margin-top:25px">PLAYERS</h2><div id="playerList" class="muted">No table joined.</div>
+  </div>
+ </div>
+</section>
+
+<section id="friends" class="hidden">
+ <div class="panel">
+  <h2>FRIENDS</h2><p class="muted">Send a request to someone currently online by username.</p>
+  <div class="row"><input id="friendName" placeholder="Player username"><button class="pink" onclick="addFriend()">SEND FRIEND REQUEST</button></div>
+  <div id="friendRequests"></div><h2>YOUR FRIENDS</h2><div id="friendList" class="muted">Friends you've added will appear here during this session.</div>
+ </div>
+</section>
+<div id="notice" class="result"></div>
+</main>
+<script>
+const socket=io();
+let myName="",roomCode="",roomState=null,friendNames=[];
+const $=id=>document.getElementById(id);
+function show(id){["login","lobby","table","friends"].forEach(x=>$(x).classList.toggle("hidden",x!==id))}
+function notice(t){$("notice").textContent=t;setTimeout(()=>$("notice").textContent="",4000)}
+function connect(){
+ myName=$("username").value.trim().slice(0,18);
+ if(!myName)return notice("Choose a username first.");
+ socket.emit("profile:create",myName);
+}
+socket.on("profile:ready",p=>{myName=p.name;$("chips").textContent=p.chips.toLocaleString();show("lobby")});
+function createRoom(){socket.emit("room:create")}
+function joinRoom(){socket.emit("room:join",$("joinCode").value)}
+socket.on("room:joined",code=>{roomCode=code;$("roomCode").textContent=code;show("table");$("chat").innerHTML="";notice("Joined table "+code)});
+function copyRoom(){navigator.clipboard?.writeText(roomCode).then(()=>notice("Invite code copied: "+roomCode)).catch(()=>notice("Share this room code: "+roomCode))}
+function selectGame(g){socket.emit("game:select",g);show("table")}
+socket.on("room:update",state=>{
+ roomState=state;roomCode=state.code;$("roomCode").textContent=state.code;
+ $("gameName").textContent=state.game.toUpperCase();
+ $("tableTitle").textContent=state.game.toUpperCase()+" TABLE";
+ $("chips").textContent=(state.players.find(p=>p.name===myName)?.chips??0).toLocaleString();
+ $("playerList").innerHTML=state.players.map(p=>`<p>◆ <b>${esc(p.name)}</b> — ${p.chips.toLocaleString()} chips</p>`).join("");
+ $("seats").innerHTML=state.players.map(p=>{
+  let h=state.round?.hands?.[p.id];
+  return `<div class="seat"><b>${esc(p.name)}</b><div class="badge">${p.id===state.round?.active?"YOUR TURN":""}</div><div class="cards">${(h?.cards||[]).map(c=>cardHTML(c)).join("")}</div><small>${h?"Score: "+handScore(h.cards):"At the table"}</small></div>`;
+ }).join("");
+ $("dealerCards").innerHTML=(state.round?.dealer||[]).map(cardHTML).join("");
+ $("gameMessage").textContent=state.round?.message||"Welcome to the table.";
+ $("turnMessage").textContent=state.round?.status==="playing"?(state.round.active===socket.id?"It's your turn.":"Waiting for the current player..."):"Start a new blackjack round when ready.";
+});
+function cardHTML(c){return `<div class="card ${["♥","♦"].includes(c.s)?"red":""}">${c.r}${c.s}</div>`}
+function handScore(hand){let n=hand.reduce((s,c)=>s+(["J","Q","K"].includes(c.r)?10:c.r==="A"?11:Number(c.r)),0);let a=hand.filter(c=>c.r==="A").length;while(n>21&&a-- >0)n-=10;return n}
+function startBlackjack(){if(!roomCode)return notice("Join a table first.");socket.emit("bj:start",Number($("bet").value))}
+function bjAction(a){socket.emit("bj:action",a)}
+function sendChat(){let t=$("chatInput").value.trim();if(!t)return;socket.emit("chat:send",t);$("chatInput").value=""}
+$("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat()});
+socket.on("chat:message",m=>{let p=document.createElement("p");p.innerHTML=`<b>${esc(m.name)}:</b> ${esc(m.text)}`;$("chat").appendChild(p);$("chat").scrollTop=$("chat").scrollHeight});
+function addFriend(){let n=$("friendName").value.trim();if(n)socket.emit("friend:request",n)}
+socket.on("friend:request",r=>{
+ let box=$("friendRequests"),d=document.createElement("p");
+ d.textContent=r.name+" sent you a friend request. ";
+ let yes=document.createElement("button");yes.textContent="ACCEPT";yes.onclick=()=>{socket.emit("friend:respond",{name:r.name,accept:true});d.remove();friendNames.push(r.name);renderFriends()};
+ let no=document.createElement("button");no.textContent="DECLINE";no.onclick=()=>{socket.emit("friend:respond",{name:r.name,accept:false});d.remove()};
+ d.append(yes,no);box.append(d);
+});
+function renderFriends(){$("friendList").textContent=friendNames.join(" · ")||"No friends added yet."}
+socket.on("notice",notice);
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+</script>
+</body></html>
